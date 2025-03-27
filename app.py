@@ -1,29 +1,38 @@
-import streamlit as st
+from flask import Flask, render_template, request
+import os
 import librosa
+import librosa.display
 import numpy as np
-from tensorflow.keras.models import load_model
-from utils import extract_mfcc
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Use Agg backend to avoid Tkinter issues
 
-# Load the trained model
-model = load_model('animal_health_model.h5')
+from werkzeug.utils import secure_filename
+import random
+from audio_analysis import process_audio
 
-# Streamlit app
-st.title("Animal Health Detection from Sound")
-st.write("Upload an audio file of an animal sound, and we'll tell if the animal is healthy or not!")
+app = Flask(__name__)
+UPLOAD_FOLDER = 'static/uploads/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-uploaded_file = st.file_uploader("Choose an audio file", type=["wav"])
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-if uploaded_file is not None:
-    # Extract MFCC features from the uploaded file
-    mfcc_features = extract_mfcc(uploaded_file)
-    mfcc_features = np.expand_dims(mfcc_features, axis=0)  # Add batch dimension
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        # Save uploaded file
+        file = request.files["audio"]
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
 
-    # Make a prediction using the model
-    prediction = model.predict(mfcc_features)
-    health_status = "Healthy" if prediction[0][0] < 0.5 else "Unhealthy"
+        # Process the audio file
+        health_status, temperature, graph_path = process_audio(filepath)
+
+        return render_template("result.html", filename=filename, health=health_status, temp=temperature, graph=graph_path)
     
-    st.write(f"The animal is: {health_status}")
+    return render_template("index.html")
 
-    # Optional: Add a feature to predict the temperature (if you have data for this).
-    # For now, just a placeholder message:
-    st.write("Temperature prediction feature will be added later.")
+if __name__ == "__main__":
+    app.run(debug=True)

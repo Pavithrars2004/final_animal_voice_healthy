@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Animal Health Analysis</h1>
+        
+        <div class="result-card">
+            <h2>Health Status: <span style="color: {{ 'green' if health == 'Healthy' else 'red' }};">{{ health }}</span></h2>
+            <h2>Temperature: <span style="color: #ff5722;">{{ temp }} °C</span></h2>
+            
+            <h3>🎵 Uploaded Audio</h3>
+            <audio controls>
+                <source src="{{ url_for('static', filename='uploads/' + filename) }}" type="audio/wav">
+                Your browser does not support the audio element.
+            </audio>
+
+            <h3>📉 Voice Frequency Graph</h3>
+            <img class="result-image" src="{{ url_for('static', filename='uploads/' + graph.split('/')[-1]) }}" alt="Voice Frequency Graph">
+        </div>
+
+        <a href="/"><button>🔄 Upload Another</button></a>
+    </div>
+</body>
+</html>
